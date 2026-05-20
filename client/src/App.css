@@ -130,6 +130,7 @@ body::before {
   position: sticky;
   top: 18px;
   height: calc(100vh - 120px);
+  min-width: 0;            /* グリッド列オーバーフロー防止 */
   display: flex;
   flex-direction: column;
 }
@@ -139,7 +140,8 @@ body::before {
   display: flex;
   flex-direction: column;
   margin-bottom: 0;
-  height: 100%;
+  min-height: 0;           /* flex子要素の高さ解決 */
+  padding-bottom: 12px;
 }
 
 /* ── PDF area ────────────────────────────────────────────────────────────── */
@@ -375,11 +377,13 @@ body::before {
 
 .canvas-wrap {
   flex: 1;
-  min-height: 400px;
+  min-height: 0;           /* flex伸長を正しく動作させる */
+  position: relative;      /* R3F Canvasのcontaining block */
   border-radius: 6px;
   overflow: hidden;
   margin-top: 10px;
   border: 1px solid rgba(255,255,255,0.05);
+  background: #0a0a0a;
 }
 
 .viewer-note {
@@ -534,6 +538,154 @@ body::before {
   margin-top: 10px; font-size: 10px; color: var(--muted);
 }
 .legend-item { display: flex; align-items: center; }
+
+/* ── Step progress ───────────────────────────────────────────────────────── */
+.step-progress {
+  padding: 14px 18px 12px;
+  margin-bottom: 14px;
+}
+
+.step-track {
+  display: flex;
+  align-items: flex-start;
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  min-width: 60px;
+}
+
+.step-node {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: transparent;
+  color: var(--muted);
+  font-size: 10px; font-weight: bold;
+  display: flex; align-items: center; justify-content: center;
+  letter-spacing: 0;
+  transition: all 0.25s;
+  flex-shrink: 0;
+}
+.step-node.active {
+  border-color: var(--cad);
+  background: rgba(0,168,255,0.12);
+  color: var(--cad);
+  box-shadow: 0 0 6px rgba(0,168,255,0.3);
+}
+.step-node.done {
+  border-color: rgba(0,168,255,0.4);
+  background: rgba(0,168,255,0.07);
+  color: rgba(0,168,255,0.7);
+  font-size: 9px;
+}
+
+.step-label {
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  white-space: nowrap;
+  transition: color 0.25s;
+}
+.step-label.active { color: var(--cad); }
+.step-label.done   { color: rgba(0,168,255,0.55); }
+
+.step-connector {
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+  margin: 0 4px;
+  margin-top: 11px;
+  transition: background 0.25s;
+}
+.step-connector.done { background: rgba(0,168,255,0.35); }
+
+.step-loading-bar {
+  width: 100%;
+  height: 2px;
+  background: rgba(0,168,255,0.1);
+  border-radius: 1px;
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.step-loading-fill {
+  height: 100%;
+  width: 35%;
+  background: var(--cad);
+  border-radius: 1px;
+  animation: stepSlide 1.6s ease-in-out infinite;
+}
+
+@keyframes stepSlide {
+  0%   { transform: translateX(-150%); }
+  50%  { transform: translateX(300%); }
+  100% { transform: translateX(-150%); }
+}
+
+/* ── Image upload area ───────────────────────────────────────────────────── */
+.upload-area {
+  border: 1px dashed rgba(255,255,255,0.14);
+  border-radius: var(--radius-sm);
+  padding: 16px 12px;
+  text-align: center;
+  cursor: pointer;
+  background: rgba(0,0,0,0.2);
+  transition: border-color 0.2s, background 0.2s;
+  user-select: none;
+}
+.upload-area:hover, .upload-area.drag-over {
+  border-color: rgba(255,255,255,0.28);
+  background: rgba(255,255,255,0.03);
+}
+
+.upload-icon {
+  font-size: 20px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  line-height: 1;
+}
+
+.upload-hint {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+}
+
+.upload-preview {
+  position: relative;
+  display: inline-block;
+}
+.upload-preview img {
+  max-width: 100%;
+  max-height: 120px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.1);
+  object-fit: contain;
+  display: block;
+}
+
+.upload-remove {
+  position: absolute;
+  top: -7px; right: -7px;
+  width: 18px; height: 18px;
+  background: rgba(20,20,20,0.95);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 50%;
+  color: var(--muted);
+  font-size: 9px; font-family: inherit;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1;
+  transition: color 0.15s;
+  padding: 0;
+}
+.upload-remove:hover { color: var(--text); }
 
 /* ── Footer ──────────────────────────────────────────────────────────────── */
 .app-footer {

@@ -42,6 +42,21 @@ const SIZES = {
     M: { halfWaist:355, halfHip:475, rise:260, inseam:740, halfLeg:240, halfHem:195, crotchExtF:30, crotchExtB:62, waistbandH:30 },
     L: { halfWaist:370, halfHip:490, rise:270, inseam:760, halfLeg:250, halfHem:200, crotchExtF:32, crotchExtB:66, waistbandH:30 },
   },
+  jacket: {
+    S: { chest:480, length:600, shoulder:420, sleeve:580, sleeveWidth:165, cuff:225, neck:370, neckDepthF:18, neckDepthB:10, armhole:182, shldrDrop:14 },
+    M: { chest:500, length:630, shoulder:440, sleeve:600, sleeveWidth:172, cuff:232, neck:380, neckDepthF:20, neckDepthB:10, armhole:188, shldrDrop:14 },
+    L: { chest:530, length:660, shoulder:460, sleeve:620, sleeveWidth:180, cuff:240, neck:390, neckDepthF:22, neckDepthB:10, armhole:195, shldrDrop:14 },
+  },
+  hoodie: {
+    S: { chest:500, length:650, shoulder:430, sleeve:570, sleeveWidth:175, cuff:150, neck:400, neckDepthF:28, neckDepthB:14, armhole:185, shldrDrop:14, hoodW:240, hoodH:300 },
+    M: { chest:520, length:680, shoulder:450, sleeve:590, sleeveWidth:182, cuff:158, neck:410, neckDepthF:30, neckDepthB:15, armhole:191, shldrDrop:14, hoodW:250, hoodH:310 },
+    L: { chest:550, length:710, shoulder:470, sleeve:610, sleeveWidth:190, cuff:166, neck:420, neckDepthF:32, neckDepthB:16, armhole:198, shldrDrop:14, hoodW:260, hoodH:320 },
+  },
+  shorts: {
+    S: { halfWaist:320, halfHip:460, rise:240, inseam:250, halfLeg:220, halfHem:200, crotchExtF:28, crotchExtB:58, waistbandH:30 },
+    M: { halfWaist:340, halfHip:480, rise:250, inseam:260, halfLeg:230, halfHem:208, crotchExtF:30, crotchExtB:62, waistbandH:30 },
+    L: { halfWaist:370, halfHip:510, rise:260, inseam:270, halfLeg:245, halfHem:218, crotchExtF:32, crotchExtB:66, waistbandH:30 },
+  },
 }
 
 export function getDimensions(itemType, size) {
@@ -56,11 +71,14 @@ export function buildPanelData(itemType = 'tshirt', size = 'M') {
   const s = v => Math.round(v * SCALE)
 
   switch (itemType) {
-    case 'shirt': return buildShirt(d, s, size)
-    case 'dress': return buildDress(d, s, size)
-    case 'skirt': return buildSkirt(d, s, size)
-    case 'pants': return buildPants(d, s, size)
-    default:      return buildTshirt(d, s, size)
+    case 'shirt':   return buildShirt(d, s, size)
+    case 'dress':   return buildDress(d, s, size)
+    case 'skirt':   return buildSkirt(d, s, size)
+    case 'pants':   return buildPants(d, s, size)
+    case 'jacket':  return buildJacket(d, s, size)
+    case 'hoodie':  return buildHoodie(d, s, size)
+    case 'shorts':  return buildShorts(d, s, size)
+    default:        return buildTshirt(d, s, size)
   }
 }
 
@@ -449,6 +467,145 @@ function buildPants(d, s, size) {
   return { itemType:'pants', size, raw:d,
     notice:'縫い代10mm。前後パンツはわで裁断。ウエストベルト1枚。',
     panels:ps, totalW, totalH }
+}
+
+// ── ジャケット / コート ──────────────────────────────────────────────────────────
+function buildJacket(d, s, size, overrideType = 'jacket') {
+  const sa = s(SEAM)
+  const halfChest = s(d.chest/2), bodyLen = s(d.length)
+  const shldr = s(d.shoulder/2), shldrDrop = s(d.shldrDrop)
+  const neckW = s(d.neck/2), neckDF = s(d.neckDepthF), neckDB = s(d.neckDepthB)
+  const ahD = s(d.armhole)
+  const slvLen = s(d.sleeve), slvTop = s(d.sleeveWidth), cuff = s(d.cuff)
+  const sideOff = Math.round((slvTop - cuff) / 2)
+  const capH = Math.round(ahD * 0.33)
+
+  const frontCut = pts([
+    `M 0,${neckDF}`,
+    `Q ${r(neckW*0.4)},${r(neckDF*0.2)} ${neckW},0`,
+    `L ${shldr},${shldrDrop}`,
+    `C ${shldr+s(10)},${r(ahD*0.42)} ${halfChest},${r(ahD*0.8)} ${halfChest},${ahD}`,
+    `L ${halfChest},${bodyLen}`,
+    `L 0,${bodyLen} Z`,
+  ])
+  const frontSeam = insetRect(0, neckDF, halfChest, bodyLen, sa)
+
+  const backCut = pts([
+    `M 0,${neckDB}`,
+    `Q ${r(neckW*0.4)},${r(neckDB*0.2)} ${neckW},0`,
+    `L ${shldr},${shldrDrop}`,
+    `C ${shldr+s(10)},${r(ahD*0.42)} ${halfChest},${r(ahD*0.8)} ${halfChest},${ahD}`,
+    `L ${halfChest},${bodyLen}`,
+    `L 0,${bodyLen} Z`,
+  ])
+  const backSeam = insetRect(0, neckDB, halfChest, bodyLen, sa)
+
+  const slvCut = pts([
+    `M 0,${capH}`,
+    `C ${r(slvTop*0.15)},${r(capH*0.18)} ${r(slvTop*0.42)},0 ${r(slvTop/2)},0`,
+    `C ${r(slvTop*0.58)},0 ${r(slvTop*0.85)},${r(capH*0.18)} ${slvTop},${capH}`,
+    `L ${slvTop-sideOff},${slvLen}`,
+    `L ${sideOff},${slvLen} Z`,
+  ])
+  const slvSeam = insetRect(sideOff, capH, slvTop-sideOff, slvLen, sa)
+
+  const ps = [
+    panel('front','前身頃','わで1枚裁断（CF折り）',0,0,halfChest,bodyLen,frontCut,frontSeam,
+      {x:halfChest/2,y1:bodyLen*0.22,y2:bodyLen*0.78},'CF',[
+        hDim(0,halfChest,bodyLen+18,`½胸囲 ${d.chest/2}`),
+        vDim(halfChest+18,0,bodyLen,`着丈 ${d.length}`),
+        hDim(0,shldr,-16,`½肩幅 ${d.shoulder/2}`),
+      ]),
+    panel('back','後身頃','わで1枚裁断（CB折り）',0,0,halfChest,bodyLen,backCut,backSeam,
+      {x:halfChest/2,y1:bodyLen*0.22,y2:bodyLen*0.78},'CB',[
+        hDim(0,halfChest,bodyLen+18,`½胸囲 ${d.chest/2}`),
+      ]),
+    panel('sleeve','袖（長袖）','2枚裁断',0,0,slvTop,slvLen,slvCut,slvSeam,
+      {x:slvTop/2,y1:slvLen*0.3,y2:slvLen*0.75},null,[
+        hDim(0,slvTop,slvLen+18,`袖山幅 ${d.sleeveWidth}`),
+        vDim(slvTop+18,capH,slvLen,`袖丈 ${d.sleeve}`),
+      ]),
+  ]
+  const { totalW, totalH } = applyVerticalLayout(ps)
+  return { itemType: overrideType, size, raw: d,
+    notice: '縫い代10mm含む（内側点線）。前後身頃はわで裁断。袖は2枚（長袖）。',
+    panels: ps, totalW, totalH }
+}
+
+// ── パーカー ──────────────────────────────────────────────────────────────────
+function buildHoodie(d, s, size) {
+  const sa = s(SEAM)
+  const halfChest = s(d.chest/2), bodyLen = s(d.length)
+  const shldr = s(d.shoulder/2), shldrDrop = s(d.shldrDrop)
+  const neckW = s(d.neck/2), neckDF = s(d.neckDepthF), neckDB = s(d.neckDepthB)
+  const ahD = s(d.armhole)
+  const slvLen = s(d.sleeve), slvTop = s(d.sleeveWidth), cuff = s(d.cuff)
+  const sideOff = Math.round((slvTop - cuff) / 2)
+  const capH = Math.round(ahD * 0.33)
+  const hoodW = s(d.hoodW), hoodH = s(d.hoodH)
+
+  const frontCut = pts([
+    `M 0,${neckDF}`,
+    `Q ${r(neckW*0.45)},${r(neckDF*0.1)} ${neckW},0`,
+    `L ${shldr},${shldrDrop}`,
+    `C ${shldr+s(10)},${r(ahD*0.42)} ${halfChest},${r(ahD*0.8)} ${halfChest},${ahD}`,
+    `L ${halfChest},${bodyLen}`, `L 0,${bodyLen} Z`,
+  ])
+  const frontSeam = insetRect(0, neckDF, halfChest, bodyLen, sa)
+
+  const backCut = pts([
+    `M 0,${neckDB}`,
+    `Q ${r(neckW*0.45)},${r(neckDB*0.15)} ${neckW},0`,
+    `L ${shldr},${shldrDrop}`,
+    `C ${shldr+s(10)},${r(ahD*0.42)} ${halfChest},${r(ahD*0.8)} ${halfChest},${ahD}`,
+    `L ${halfChest},${bodyLen}`, `L 0,${bodyLen} Z`,
+  ])
+  const backSeam = insetRect(0, neckDB, halfChest, bodyLen, sa)
+
+  const slvCut = pts([
+    `M 0,${capH}`,
+    `C ${r(slvTop*0.15)},${r(capH*0.18)} ${r(slvTop*0.42)},0 ${r(slvTop/2)},0`,
+    `C ${r(slvTop*0.58)},0 ${r(slvTop*0.85)},${r(capH*0.18)} ${slvTop},${capH}`,
+    `L ${slvTop-sideOff},${slvLen}`, `L ${sideOff},${slvLen} Z`,
+  ])
+  const slvSeam = insetRect(sideOff, capH, slvTop-sideOff, slvLen, sa)
+
+  const hoodCut = pts([
+    `M 0,${hoodH}`,
+    `Q ${r(hoodW*0.5)},${r(hoodH*1.08)} ${hoodW},${hoodH}`,
+    `L ${hoodW},${r(hoodH*0.2)}`,
+    `Q ${r(hoodW*0.5)},0 0,${r(hoodH*0.2)} Z`,
+  ])
+  const hoodSeam = insetRect(0, 0, hoodW, hoodH, sa)
+
+  const ps = [
+    panel('front','前身頃','わで1枚裁断（CF折り）',0,0,halfChest,bodyLen,frontCut,frontSeam,
+      {x:halfChest/2,y1:bodyLen*0.22,y2:bodyLen*0.78},'CF',[
+        hDim(0,halfChest,bodyLen+18,`½胸囲 ${d.chest/2}`),
+        vDim(halfChest+18,0,bodyLen,`着丈 ${d.length}`),
+      ]),
+    panel('back','後身頃','わで1枚裁断（CB折り）',0,0,halfChest,bodyLen,backCut,backSeam,
+      {x:halfChest/2,y1:bodyLen*0.22,y2:bodyLen*0.78},'CB',[]),
+    panel('sleeve','袖（長袖）','2枚裁断',0,0,slvTop,slvLen,slvCut,slvSeam,
+      {x:slvTop/2,y1:slvLen*0.3,y2:slvLen*0.75},null,[
+        vDim(slvTop+18,capH,slvLen,`袖丈 ${d.sleeve}`),
+      ]),
+    panel('hood','フード','2枚裁断（左右対称）',0,0,hoodW,hoodH,hoodCut,hoodSeam,
+      {x:hoodW/2,y1:hoodH*0.35,y2:hoodH*0.7},null,[
+        hDim(0,hoodW,hoodH+18,`フード幅 ${d.hoodW}`),
+        vDim(hoodW+18,0,hoodH,`フード丈 ${d.hoodH}`),
+      ]),
+  ]
+  const { totalW, totalH } = applyVerticalLayout(ps)
+  return { itemType:'hoodie', size, raw:d,
+    notice:'縫い代10mm含む。前後身頃はわで裁断。袖は2枚（長袖）。フード2枚（左右対称）。',
+    panels:ps, totalW, totalH }
+}
+
+// ── ショートパンツ ────────────────────────────────────────────────────────────
+function buildShorts(d, s, size) {
+  const res = buildPants(d, s, size)
+  return { ...res, itemType:'shorts' }
 }
 
 // ── パネルオブジェクト生成ヘルパー ──────────────────────────────────────────────

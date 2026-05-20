@@ -4,13 +4,16 @@ import DesignInput from './components/DesignInput'
 import ModelViewer from './components/ModelViewer'
 import PatternSVG from './components/PatternSVG'
 import PDFExport from './components/PDFExport'
+import StepProgress from './components/StepProgress'
 import './App.css'
 
 const API = import.meta.env.VITE_API_BASE ?? 'http://localhost:3001'
 
 const ITEM_LABELS = {
   tshirt: 'Tシャツ', shirt: 'Yシャツ', dress: 'ワンピース',
-  skirt: 'スカート', pants: 'ズボン'
+  skirt: 'スカート', pants: 'ズボン',
+  jacket: 'ジャケット', hoodie: 'パーカー',
+  shorts: 'ショートパンツ',
 }
 
 export default function App() {
@@ -24,14 +27,16 @@ export default function App() {
   const [patternGlowing, setPatternGlowing]   = useState(false)
   const [clothingVisible, setClothingVisible] = useState(true)
 
-  async function handleGenerate({ userDescription, itemType: it, size: sz, color: col }) {
+  // 1=アイテム選択(always done) 2=デザイン入力 3=AI解析中 4=型紙完成
+  const currentStep = aiLoading ? 3 : result ? 4 : 2
+
+  async function handleGenerate({ userDescription, itemType: it, size: sz, color: col, imageBase64 }) {
     setAiLoading(true)
     setError(null)
     setResult(null)
     setColor(col)
     setSize(sz)
     setItemType(it)
-    // 演出①：型紙SVGが青く光る（0.5s）→ ②服フェードイン
     setPatternGlowing(true)
     setClothingVisible(false)
     setTimeout(() => {
@@ -41,9 +46,11 @@ export default function App() {
 
     try {
       const { data } = await axios.post(`${API}/api/openai/transform`, {
-        userDescription, itemType: it, size: sz, color: col
+        userDescription, itemType: it, size: sz, color: col, imageBase64
       })
       setResult(data)
+      // 画像解析でアイテム種別が変わった場合にビューアを更新
+      if (data.itemType && ITEM_LABELS[data.itemType]) setItemType(data.itemType)
     } catch (err) {
       setError(err.response?.data?.error || err.message)
     } finally {
@@ -90,6 +97,8 @@ export default function App() {
       <main className="main-split">
         {/* ── 左画面：型紙エリア ── */}
         <div className="split-left">
+          <StepProgress currentStep={currentStep} />
+
           <DesignInput
             onGenerate={handleGenerate}
             loading={aiLoading}
